@@ -1,0 +1,579 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Analytics - NBCFDC Platform{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .metric-card {
+        background: rgba(12, 12, 17, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(126, 126, 215, 0.2);
+        border-radius: 20px;
+        padding: 30px;
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.6s ease forwards;
+        opacity: 0;
+    }
+
+    .metric-card:nth-child(1) { animation-delay: 0.1s; }
+    .metric-card:nth-child(2) { animation-delay: 0.2s; }
+    .metric-card:nth-child(3) { animation-delay: 0.3s; }
+    .metric-card:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .metric-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-mint);
+        box-shadow: 0 10px 30px rgba(104, 252, 198, 0.2);
+    }
+
+    .metric-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+
+    .metric-icon-green { background: rgba(104, 252, 198, 0.1); }
+    .metric-icon-blue { background: rgba(41, 41, 255, 0.1); }
+    .metric-icon-purple { background: rgba(126, 126, 215, 0.1); }
+    .metric-icon-orange { background: rgba(255, 150, 50, 0.1); }
+
+    .metric-value {
+        font-size: 36px;
+        font-weight: 800;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, var(--white), var(--accent-mint));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .metric-label {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 500;
+    }
+
+    .metric-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 10px;
+        padding: 4px 10px;
+        border-radius: 12px;
+    }
+
+    .metric-change.positive {
+        background: rgba(104, 252, 198, 0.1);
+        color: var(--accent-mint);
+    }
+
+    .metric-change.negative {
+        background: rgba(255, 80, 80, 0.1);
+        color: #ff5050;
+    }
+
+    .charts-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+
+    .chart-card {
+        background: rgba(12, 12, 17, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(126, 126, 215, 0.2);
+        border-radius: 25px;
+        padding: 35px;
+        animation: fadeInLeft 0.6s ease;
+    }
+
+    @keyframes fadeInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .chart-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+
+    .risk-bands-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .risk-band-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 2px solid rgba(126, 126, 215, 0.2);
+        border-radius: 15px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .risk-band-item:hover {
+        border-color: var(--accent-mint);
+        transform: translateY(-3px);
+    }
+
+    .risk-band-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .risk-band-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+
+    .color-green { background: var(--accent-mint); }
+    .color-blue { background: #6b6bff; }
+    .color-orange { background: #ff9632; }
+    .color-red { background: #ff5050; }
+
+    .risk-band-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--white);
+    }
+
+    .risk-band-count {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--white);
+        margin-bottom: 5px;
+    }
+
+    .risk-band-percentage {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .beneficiaries-table {
+        background: rgba(12, 12, 17, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(126, 126, 215, 0.2);
+        border-radius: 25px;
+        padding: 35px;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(126, 126, 215, 0.3);
+        border-radius: 12px;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .search-box:focus-within {
+        border-color: var(--accent-mint);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .search-input {
+        background: none;
+        border: none;
+        outline: none;
+        color: var(--white);
+        font-size: 14px;
+        width: 250px;
+    }
+
+    .search-input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    th {
+        padding: 15px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid rgba(126, 126, 215, 0.2);
+    }
+
+    td {
+        padding: 18px 15px;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.8);
+        border-bottom: 1px solid rgba(126, 126, 215, 0.1);
+    }
+
+    tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    tbody tr:hover {
+        background: rgba(104, 252, 198, 0.05);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background: rgba(104, 252, 198, 0.15);
+        color: var(--accent-mint);
+    }
+
+    .status-review {
+        background: rgba(255, 150, 50, 0.15);
+        color: #ff9632;
+    }
+
+    .status-inactive {
+        background: rgba(255, 80, 80, 0.15);
+        color: #ff5050;
+    }
+
+    .band-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(126, 126, 215, 0.2);
+    }
+
+    .score-cell {
+        font-weight: 700;
+        font-size: 16px;
+    }
+
+    .score-excellent { color: var(--accent-mint); }
+    .score-good { color: #6b6bff; }
+    .score-fair { color: #ff9632; }
+    .score-poor { color: #ff5050; }
+
+    @media (max-width: 1024px) {
+        .analytics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .charts-row {
+            grid-template-columns: 1fr;
+        }
+
+        .risk-bands-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .analytics-grid {
+            grid-template-columns: 1fr;
+        }
+
+        table {
+            font-size: 12px;
+        }
+
+        th, td {
+            padding: 10px 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">Analytics Dashboard</h1>
+        <p class="page-subtitle">Comprehensive overview of lending operations and beneficiary performance</p>
+    </div>
+
+    <div class="analytics-grid">
+        <div class="metric-card">
+            <div class="metric-icon metric-icon-green">👥</div>
+            <div class="metric-value">1,247</div>
+            <div class="metric-label">Total Beneficiaries</div>
+            <div class="metric-change positive">↑ 12.5% vs last month</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon metric-icon-blue">✅</div>
+            <div class="metric-value">892</div>
+            <div class="metric-label">Approved Loans</div>
+            <div class="metric-change positive">↑ 8.3% vs last month</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon metric-icon-purple">💰</div>
+            <div class="metric-value">₹45.2Cr</div>
+            <div class="metric-label">Total Disbursed</div>
+            <div class="metric-change positive">↑ 15.7% vs last month</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon metric-icon-orange">📊</div>
+            <div class="metric-value">94.5%</div>
+            <div class="metric-label">Repayment Rate</div>
+            <div class="metric-change positive">↑ 2.1% vs last month</div>
+        </div>
+    </div>
+
+    <div class="charts-row">
+        <div class="chart-card">
+            <h2 class="chart-title">
+                <span>📈</span>
+                <span>Loan Disbursement Trend</span>
+            </h2>
+            <div class="chart-container">
+                <canvas id="disbursementChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h2 class="chart-title">
+                <span>🎯</span>
+                <span>Risk Band Distribution</span>
+            </h2>
+            <div class="risk-bands-grid">
+                <div class="risk-band-item">
+                    <div class="risk-band-header">
+                        <div class="risk-band-color color-green"></div>
+                        <div class="risk-band-name">Low Risk - High Need</div>
+                    </div>
+                    <div class="risk-band-count">487</div>
+                    <div class="risk-band-percentage">39.1% of total</div>
+                </div>
+
+                <div class="risk-band-item">
+                    <div class="risk-band-header">
+                        <div class="risk-band-color color-blue"></div>
+                        <div class="risk-band-name">Low Risk - Low Need</div>
+                    </div>
+                    <div class="risk-band-count">356</div>
+                    <div class="risk-band-percentage">28.5% of total</div>
+                </div>
+
+                <div class="risk-band-item">
+                    <div class="risk-band-header">
+                        <div class="risk-band-color color-orange"></div>
+                        <div class="risk-band-name">High Risk - High Need</div>
+                    </div>
+                    <div class="risk-band-count">278</div>
+                    <div class="risk-band-percentage">22.3% of total</div>
+                </div>
+
+                <div class="risk-band-item">
+                    <div class="risk-band-header">
+                        <div class="risk-band-color color-red"></div>
+                        <div class="risk-band-name">High Risk - Low Need</div>
+                    </div>
+                    <div class="risk-band-count">126</div>
+                    <div class="risk-band-percentage">10.1% of total</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="beneficiaries-table">
+        <div class="table-header">
+            <h2 class="chart-title">
+                <span>📋</span>
+                <span>Beneficiary Overview</span>
+            </h2>
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" class="search-input" placeholder="Search beneficiaries...">
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Beneficiary ID</th>
+                    <th>Name</th>
+                    <th>Credit Score</th>
+                    <th>Risk Band</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for beneficiary in beneficiaries %}
+                <tr>
+                    <td>{{ beneficiary.id }}</td>
+                    <td>{{ beneficiary.name }}</td>
+                    <td>
+                        <span class="score-cell {% if beneficiary.score >= 750 %}score-excellent{% elif beneficiary.score >= 650 %}score-good{% elif beneficiary.score >= 550 %}score-fair{% else %}score-poor{% endif %}">
+                            {{ beneficiary.score }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="band-badge">
+                            <div class="risk-band-color {% if 'Low Risk - High Need' in beneficiary.band %}color-green{% elif 'Low Risk - Low Need' in beneficiary.band %}color-blue{% elif 'High Risk - High Need' in beneficiary.band %}color-orange{% else %}color-red{% endif %}"></div>
+                            {{ beneficiary.band }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge {% if beneficiary.status == 'Active' %}status-active{% elif beneficiary.status == 'Under Review' %}status-review{% else %}status-inactive{% endif %}">
+                            {{ beneficiary.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <button style="background: none; border: none; color: var(--accent-mint); cursor: pointer; font-size: 14px; font-weight: 600;">View Details →</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Disbursement Trend Chart
+    const ctx = document.getElementById('disbursementChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(104, 252, 198, 0.3)');
+    gradient.addColorStop(1, 'rgba(104, 252, 198, 0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Disbursed Amount (₹ Cr)',
+                data: [2.5, 2.8, 3.2, 3.5, 3.8, 4.0, 4.2, 4.5, 4.3, 4.6, 4.4, 4.7],
+                borderColor: '#68FCC6',
+                backgroundColor: gradient,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointBackgroundColor: '#68FCC6',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(12, 12, 17, 0.9)',
+                    padding: 12,
+                    titleColor: '#68FCC6',
+                    bodyColor: '#fff',
+                    borderColor: '#68FCC6',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        callback: function(value) {
+                            return '₹' + value + 'Cr';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)'
+                    }
+                }
+            }
+        }
+    });
+
+    // Search functionality
+    document.querySelector('.search-input').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

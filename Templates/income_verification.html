@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}Income Verification - NBCFDC Platform{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .verification-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+
+    .verification-card {
+        background: rgba(12, 12, 17, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(126, 126, 215, 0.2);
+        border-radius: 25px;
+        padding: 40px;
+        animation: fadeInUp 0.6s ease forwards;
+        opacity: 0;
+    }
+
+    .verification-card:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .verification-card:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .card-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(104, 252, 198, 0.1);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+    }
+
+    .card-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--white);
+    }
+
+    .card-description {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.6);
+        line-height: 1.6;
+        margin-bottom: 25px;
+    }
+
+    .upload-zone {
+        border: 2px dashed rgba(126, 126, 215, 0.3);
+        border-radius: 15px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.02);
+        margin-bottom: 20px;
+    }
+
+    .upload-zone:hover {
+        border-color: var(--accent-mint);
+        background: rgba(104, 252, 198, 0.05);
+    }
+
+    .upload-icon {
+        font-size: 50px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+
+    .upload-text {
+        font-size: 16px;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .upload-subtext {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .btn-upload {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, var(--bright-blue), #4d4dff);
+        color: var(--white);
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-upload:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(41, 41, 255, 0.4);
+    }
+
+    .verification-benefits {
+        background: rgba(104, 252, 198, 0.05);
+        border: 1px solid rgba(104, 252, 198, 0.2);
+        border-radius: 15px;
+        padding: 25px;
+        margin-top: 30px;
+    }
+
+    .benefits-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--accent-mint);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .benefits-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .benefits-list li {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+        padding: 10px 0;
+        padding-left: 25px;
+        position: relative;
+        line-height: 1.5;
+    }
+
+    .benefits-list li::before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: var(--accent-mint);
+        font-weight: 700;
+    }
+
+    .consumption-types {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .consumption-type {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(126, 126, 215, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .consumption-type:hover {
+        border-color: var(--accent-mint);
+        background: rgba(104, 252, 198, 0.05);
+    }
+
+    .type-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .type-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(104, 252, 198, 0.1);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .type-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--white);
+    }
+
+    .type-description {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.6);
+        line-height: 1.5;
+    }
+
+    .current-score-panel {
+        background: linear-gradient(135deg, rgba(104, 252, 198, 0.1), rgba(41, 41, 255, 0.05));
+        border: 2px solid rgba(104, 252, 198, 0.3);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    .score-panel-title {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+
+    .score-panel-value {
+        font-size: 48px;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--accent-mint), #4de0b3);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+    }
+
+    .score-panel-text {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .impact-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(104, 252, 198, 0.15);
+        color: var(--accent-mint);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-top: 15px;
+    }
+
+    @media (max-width: 1024px) {
+        .verification-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">Income Verification</h1>
+        <p class="page-subtitle">Upload consumption data to improve your credit score</p>
+    </div>
+
+    <div class="verification-grid">
+        <div class="verification-card">
+            <div class="card-header">
+                <div class="card-icon">📊</div>
+                <div class="card-title">Upload Consumption Data</div>
+            </div>
+            <p class="card-description">
+                Upload your electricity bills, mobile recharge records, or utility bills to verify your income level. This helps us provide better loan terms and faster approvals.
+            </p>
+
+            <div class="consumption-types">
+                <div class="consumption-type">
+                    <div class="type-header">
+                        <div class="type-icon">⚡</div>
+                        <div class="type-name">Electricity Bills</div>
+                    </div>
+                    <div class="type-description">
+                        Monthly electricity consumption patterns help verify household activity and income levels
+                    </div>
+                </div>
+
+                <div class="consumption-type">
+                    <div class="type-header">
+                        <div class="type-icon">📱</div>
+                        <div class="type-name">Mobile Recharges</div>
+                    </div>
+                    <div class="type-description">
+                        Frequency and amounts of mobile recharges indicate stable income sources
+                    </div>
+                </div>
+
+                <div class="consumption-type">
+                    <div class="type-header">
+                        <div class="type-icon">💧</div>
+                        <div class="type-name">Utility Bills</div>
+                    </div>
+                    <div class="type-description">
+                        Water, gas, and other utility payments show consistent payment behavior
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Click to upload documents</div>
+                <div class="upload-subtext">PDF, JPG, PNG (Max 5MB)</div>
+            </div>
+            <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.jpg,.jpeg,.png">
+
+            <button class="btn-upload" onclick="uploadFiles()">Submit for Verification</button>
+
+            <div class="verification-benefits">
+                <div class="benefits-title">
+                    <span>✨</span>
+                    <span>Benefits of Verification</span>
+                </div>
+                <ul class="benefits-list">
+                    <li>Improve your credit score by up to 50 points</li>
+                    <li>Get access to higher loan amounts</li>
+                    <li>Qualify for lower interest rates</li>
+                    <li>Faster loan approval process</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="verification-card">
+            <div class="card-header">
+                <div class="card-icon">🎯</div>
+                <div class="card-title">Current Score Status</div>
+            </div>
+
+            <div class="current-score-panel">
+                <div class="score-panel-title">Current Composite Score</div>
+                <div class="score-panel-value">782</div>
+                <div class="score-panel-text">Excellent - Low Risk Category</div>
+                <div class="impact-indicator">
+                    ⬆️ Add +50 points with income verification
+                </div>
+            </div>
+
+            <div class="card-description">
+                <strong>What happens after verification?</strong><br><br>
+                Our AI system will analyze your consumption patterns to:
+            </div>
+
+            <ul class="benefits-list" style="margin-top: 15px;">
+                <li>Validate your income category (Low/Medium/High)</li>
+                <li>Cross-check with repayment behavior patterns</li>
+                <li>Calculate an updated composite credit score</li>
+                <li>Adjust your risk band classification</li>
+                <li>Update your loan eligibility limits</li>
+            </ul>
+
+            <div class="verification-benefits" style="margin-top: 25px;">
+                <div class="benefits-title">
+                    <span>🔒</span>
+                    <span>Privacy & Security</span>
+                </div>
+                <ul class="benefits-list">
+                    <li>All data is encrypted and securely stored</li>
+                    <li>Used only for credit assessment purposes</li>
+                    <li>No data shared with third parties</li>
+                    <li>Compliant with data protection regulations</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function uploadFiles() {
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput.files.length === 0) {
+            alert('Please select files to upload');
+            return;
+        }
+
+        // Simulate upload process
+        alert(`${fileInput.files.length} file(s) uploaded successfully! Your data will be processed within 24 hours and your credit score will be updated.`);
+        fileInput.value = '';
+    }
+
+    // File input change handler
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            const uploadZone = document.querySelector('.upload-zone');
+            uploadZone.innerHTML = `
+                <div class="upload-icon">✓</div>
+                <div class="upload-text">${files.length} file(s) selected</div>
+                <div class="upload-subtext">Click to change selection</div>
+            `;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NBCFDC Digital Lending Platform{% endblock %}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-purple: #7E7ED7;
+            --dark-navy: #0C0C11;
+            --accent-mint: #68FCC6;
+            --bright-blue: #2929FF;
+            --white: #FFFFFF;
+        }
+
+        @font-face {
+            font-family: 'General Sans';
+            src: local('Arial'), local('Helvetica');
+        }
+
+        body {
+            font-family: 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: var(--white);
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(104, 252, 198, 0.08) 0%, transparent 70%);
+            top: -200px;
+            right: -200px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(41, 41, 255, 0.06) 0%, transparent 70%);
+            bottom: -150px;
+            left: -150px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0);
+            }
+            50% {
+                transform: translate(30px, -30px);
+            }
+        }
+
+        .navbar {
+            background: rgba(12, 12, 17, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(126, 126, 215, 0.2);
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+            color: var(--white);
+        }
+
+        .brand-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--accent-mint), var(--bright-blue));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--dark-navy);
+        }
+
+        .brand-text {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--white), var(--accent-mint));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .navbar-menu {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .navbar-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+
+        .navbar-link:hover {
+            color: var(--accent-mint);
+            background: rgba(104, 252, 198, 0.05);
+        }
+
+        .navbar-link.active {
+            color: var(--accent-mint);
+            background: rgba(104, 252, 198, 0.1);
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .user-id {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-logout {
+            padding: 10px 20px;
+            background: rgba(255, 80, 80, 0.1);
+            border: 1px solid rgba(255, 80, 80, 0.3);
+            color: #ff5050;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 80, 80, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-header {
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--white), var(--accent-mint));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .navbar-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(12, 12, 17, 0.95);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                padding: 20px;
+                gap: 10px;
+                border-top: 1px solid rgba(126, 126, 215, 0.2);
+            }
+
+            .navbar-menu.active {
+                display: flex;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .navbar-user {
+                display: none;
+            }
+
+            .container {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page-title {
+                font-size: 28px;
+            }
+
+            .navbar-container {
+                padding: 0 20px;
+            }
+        }
+
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="{{ url_for('dashboard') }}" class="navbar-brand">
+                <div class="brand-icon">N</div>
+                <div class="brand-text">NBCFDC</div>
+            </a>
+
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+
+            <ul class="navbar-menu" id="navbarMenu">
+                <li><a href="{{ url_for('dashboard') }}" class="navbar-link">Dashboard</a></li>
+                {% if session.role == 'beneficiary' %}
+                <li><a href="{{ url_for('credit_score') }}" class="navbar-link">Credit Score</a></li>
+                <li><a href="{{ url_for('new_loan') }}" class="navbar-link">New Loan</a></li>
+                <li><a href="{{ url_for('loan_status') }}" class="navbar-link">Loan Status</a></li>
+                <li><a href="{{ url_for('income_verification') }}" class="navbar-link">Income Verification</a></li>
+                {% elif session.role == 'admin' %}
+                <li><a href="{{ url_for('admin_analytics') }}" class="navbar-link">Analytics</a></li>
+                {% endif %}
+            </ul>
+
+            <div class="navbar-user">
+                <div class="user-info">
+                    <div class="user-name">{{ name }}</div>
+                    <div class="user-id">{{ user_id }}</div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('navbarMenu');
+            menu.classList.toggle('active');
+        }
+
+        // Highlight active link
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.navbar-link').forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
