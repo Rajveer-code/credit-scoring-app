@@ -9,7 +9,9 @@ import json
 from datetime import datetime
 import sys # Import the sys module for logging
 
-app = Flask(__name__)
+# FIX: Explicitly tell Flask the name of the template folder.
+app = Flask(__name__, template_folder='Templates')
+
 app.secret_key = 'nbcfdc_sih_2024_secret_key_change_in_production'
 
 # Mock user data with complete profiles
@@ -192,3 +194,4 @@ def repeat_loan():
 if __name__ == '__main__':
     # This part is for local development only and will not run on Render
     app.run(debug=True, port=5000)
+
