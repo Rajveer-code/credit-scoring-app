@@ -7,6 +7,7 @@ from flask import Flask, render_template, redirect, url_for, session, request, j
 import os
 import json
 from datetime import datetime
+import sys # Import the sys module for logging
 
 app = Flask(__name__)
 app.secret_key = 'nbcfdc_sih_2024_secret_key_change_in_production'
@@ -49,60 +50,75 @@ BENEFICIARIES = [
 
 @app.route('/')
 def index():
+    print("DEBUG: Reached root route '/'", file=sys.stderr)
     if 'user' in session:
+        print("DEBUG: User in session, redirecting to dashboard.", file=sys.stderr)
         return redirect(url_for('dashboard'))
+    print("DEBUG: No user in session, redirecting to login.", file=sys.stderr)
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    print("DEBUG: Reached /login route.", file=sys.stderr)
+    # If user is already logged in, redirect them to the dashboard
+    if 'user' in session:
+        return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         
+        print(f"DEBUG: Login attempt for username: {username}", file=sys.stderr)
+
         if username in USERS and USERS[username]['password'] == password:
             session['user'] = username
             session['role'] = USERS[username]['role']
             session['name'] = USERS[username]['name']
             session['user_id'] = USERS[username]['id']
             
-            # Add additional user data to session
             if username == 'beneficiary':
                 session['credit_score'] = USERS[username]['credit_score']
                 session['risk_band'] = USERS[username]['risk_band']
             
+            print("DEBUG: Login successful, redirecting to dashboard.", file=sys.stderr)
             return redirect(url_for('dashboard'))
         else:
+            print("DEBUG: Invalid credentials.", file=sys.stderr)
             return render_template('login.html', error='Invalid credentials')
     
+    print("DEBUG: Serving login page.", file=sys.stderr)
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
+    print("DEBUG: Logging out user.", file=sys.stderr)
     session.clear()
     return redirect(url_for('login'))
 
 @app.route('/dashboard')
 def dashboard():
+    print("DEBUG: Reached /dashboard route.", file=sys.stderr)
     if 'user' not in session:
         return redirect(url_for('login'))
     
     user_data = USERS.get(session['user'], {})
     return render_template('dashboard.html', 
-                         name=session.get('name'), 
-                         user_id=session.get('user_id'),
-                         role=session.get('role'),
-                         user_data=user_data)
+                             name=session.get('name'), 
+                             user_id=session.get('user_id'),
+                             role=session.get('role'),
+                             user_data=user_data)
 
 @app.route('/credit-score')
 def credit_score():
+    print("DEBUG: Reached /credit-score route.", file=sys.stderr)
     if 'user' not in session:
         return redirect(url_for('login'))
     
     user_data = USERS.get(session['user'], {})
     return render_template('credit_score.html', 
-                         name=session.get('name'),
-                         user_id=session.get('user_id'),
-                         user_data=user_data)
+                             name=session.get('name'),
+                             user_id=session.get('user_id'),
+                             user_data=user_data)
 
 @app.route('/new-loan')
 def new_loan():
@@ -111,9 +127,9 @@ def new_loan():
     
     user_data = USERS.get(session['user'], {})
     return render_template('new_loan.html', 
-                         name=session.get('name'),
-                         user_id=session.get('user_id'),
-                         user_data=user_data)
+                             name=session.get('name'),
+                             user_id=session.get('user_id'),
+                             user_data=user_data)
 
 @app.route('/loan-status')
 def loan_status():
@@ -122,9 +138,9 @@ def loan_status():
     
     user_data = USERS.get(session['user'], {})
     return render_template('loan_status.html', 
-                         name=session.get('name'),
-                         user_id=session.get('user_id'),
-                         user_data=user_data)
+                             name=session.get('name'),
+                             user_id=session.get('user_id'),
+                             user_data=user_data)
 
 @app.route('/income-verification')
 def income_verification():
@@ -132,8 +148,8 @@ def income_verification():
         return redirect(url_for('login'))
     
     return render_template('income_verification.html', 
-                         name=session.get('name'),
-                         user_id=session.get('user_id'))
+                             name=session.get('name'),
+                             user_id=session.get('user_id'))
 
 @app.route('/admin-analytics')
 def admin_analytics():
@@ -141,8 +157,8 @@ def admin_analytics():
         return redirect(url_for('dashboard'))
     
     return render_template('admin_analytics.html', 
-                         name=session.get('name'),
-                         beneficiaries=BENEFICIARIES)
+                             name=session.get('name'),
+                             beneficiaries=BENEFICIARIES)
 
 # API endpoints for dynamic features
 @app.route('/api/submit-loan', methods=['POST'])
@@ -151,7 +167,6 @@ def submit_loan():
         return jsonify({'error': 'Unauthorized'}), 401
     
     data = request.get_json()
-    # Simulate instant approval for demo
     return jsonify({
         'success': True,
         'loan_id': 'LOAN-' + datetime.now().strftime('%Y%m%d%H%M%S'),
@@ -165,7 +180,6 @@ def repeat_loan():
     if 'user' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     
-    # Simulate 2-click repeat loan
     return jsonify({
         'success': True,
         'loan_id': 'LOAN-RPT-' + datetime.now().strftime('%Y%m%d%H%M%S'),
@@ -176,14 +190,5 @@ def repeat_loan():
     })
 
 if __name__ == '__main__':
-    # Create templates directory if it doesn't exist
-    if not os.path.exists('templates'):
-        os.makedirs('templates')
-    
-    print("🚀 NBCFDC Digital Lending Platform Starting...")
-    print("📍 Login credentials:")
-    print("   Beneficiary - username: beneficiary, password: demo123")
-    print("   Admin - username: admin, password: admin123")
-    print("🌐 Access at: http://localhost:5000")
-    
+    # This part is for local development only and will not run on Render
     app.run(debug=True, port=5000)
